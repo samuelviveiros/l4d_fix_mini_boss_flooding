@@ -8,6 +8,9 @@
 
   CHANGELOG:
 
+  2019-05-18 (v1.0.1)
+    - Fixed counter issue that was not being decremented when a Tank died.
+
   2019-05-18 (v1.0.0)
     - Initial version.
 
@@ -71,7 +74,7 @@ public void OnPluginStart() {
     CreateConVar(
         "l4d_fix_mini_boss_flooding__max_allowed",
         "4",
-        "Enable or disable this plugin.",
+        "Maximum allowed tanks.",
         FCVAR_NOTIFY,
         true, 1.0,
         true, 18.0
@@ -79,6 +82,7 @@ public void OnPluginStart() {
 
     RegConsoleCmd("totaltanks", Command_ShowTotalTanks);
     HookEvent("tank_spawn", Event_TankSpawn);
+    HookEvent("tank_killed", Event_TankKilled);
     AutoExecConfig(true, "l4d_fix_mini_boss_flooding");
 }
 
@@ -117,6 +121,17 @@ public Action Event_TankSpawn(Handle event,
 	return Plugin_Continue;
 }
 
+public Action Event_TankKilled(Handle event,
+                               const char[] name,
+                               bool dontBroadcast) {
+    if (!(GetConVarInt(g_PluginEnabled) != 0))
+        return Plugin_Continue;
+
+    g_TotalAliveTanks--;
+
+	return Plugin_Continue;
+}
+
 public Action Timer_KillTank(Handle timer, any userid) {
     int tank = GetClientOfUserId(view_as<int>(userid));
 
@@ -133,7 +148,6 @@ public Action Timer_KillTank(Handle timer, any userid) {
         return Plugin_Stop;
 
     ForcePlayerSuicide(tank);
-    g_TotalAliveTanks--;
 
     return Plugin_Stop;
 }
